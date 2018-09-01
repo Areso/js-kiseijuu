@@ -1,0 +1,203 @@
+<html>
+<head>
+	<title>test</title>
+	<meta charset="utf-8" /> 
+</head>
+<body>
+<div>
+	Ваша цель своровать 1 000 000 и свалить в Англию на ПМЖ.</br>
+	Будьте внимательны, если счастье слишком низкое, то люди взбунтуются и повесят вас!</br>
+</div>
+<p><strong>Год: <div id="days"></div></strong></p>
+<table border="1">
+	<tr>
+		<th>Бюджет</th>
+		<th>Охлос, чел</th>
+		<th>Счастье</th>
+		<th>Медицина</th>
+		<th>Дороги</th>
+		<th>Образование</th>
+		<th>ВВП</th>
+		<th>Налоги</th>
+		<th>Прибавка в бюджет</th>
+		<th>Прирост, чел</th>
+	</tr>
+	<tr>
+		<td id="total"></td>
+		<td id="ohlos"></td>
+		<td id="happy"></td>
+		<td id="medic"></td>
+		<td id="road"></td>
+		<td id="educ"></td>
+		<td id="vvp"></td>
+		<!--<td id="tax"></td>-->
+		<td><input id="tax" type="text" onchange="check_tax()" value="0.5"></td>
+		<td id="total_up"></td>
+		<td id="ohl_up"></td>
+	</td>
+</table>
+<table border="1">
+	<tr>
+		<th>Денег у чиновника</th>
+		<th>Бюджет</th>
+		<th>Украсть</th>
+		<th>Расходы на медицину</th>
+		<th>Расходы на дороги</th>
+		<th>Расходы на образование</th>
+	</tr>
+	<tr>
+		<td id="parasit"></td>
+		<td id="total_send"></td>
+		<td><input id="send_to_parasit" type="text" onchange="check_total_up('send_to_parasit')" value="0"></td>
+		<td><input id="send_to_medic" type="text" onchange="check_total_up('send_to_medic')" value="0"></td>
+		<td><input id="send_to_road" type="text" onchange="check_total_up('send_to_road')" value="0"></td>
+		<td><input id="send_to_educ" type="text" onchange="check_total_up('send_to_educ')" value="0"></td>
+	</tr>
+</table>
+<table border="1">
+	<tr>
+		<th>
+			Перевод личных денег в бюджет:
+		</th>
+		<th>
+			<input id="send_to_budget" type="text" onchange="check_total_up('send_to_educ')" value="0">
+		</th>
+		<th>
+			<input type="button" value="Перевести" onclick=transfer_to_budget()>
+		</th>
+	</tr>
+</table>
+<input type="button" value="Next" onclick=next_state()>
+
+<script>
+'use strict';
+
+let day = 1;
+
+let state = {
+	"total": 1000,
+	"ohlos": 1000,
+	"happy": 0.3,
+	"medic": 0.3,
+	"road": 0.3,
+	"educ": 0.3,
+	"tax": 0.5,
+}
+
+let days     = document.getElementById('days');
+
+let total    = document.getElementById('total');
+let ohlos    = document.getElementById('ohlos');
+let happy    = document.getElementById('happy');
+let medic    = document.getElementById('medic');
+let road     = document.getElementById('road');
+let educ     = document.getElementById('educ');
+let vvp      = document.getElementById('vvp');
+let tax      = document.getElementById('tax');
+let total_up = document.getElementById('total_up');
+let ohl_up   = document.getElementById('ohl_up');
+
+let parasit         = document.getElementById('parasit');
+let total_send      = document.getElementById('total_send');
+let send_to_parasit = document.getElementById('send_to_parasit');
+let send_to_medic   = document.getElementById('send_to_medic');
+let send_to_road    = document.getElementById('send_to_road');
+let send_to_educ    = document.getElementById('send_to_educ');
+
+let cur_vvp;
+let cur_ohl_up;
+let cur_total_up;
+let cur_parasit = 0;
+
+let main_coof = 0.2;
+
+function check_tax() {
+	let taxes_to_validate = document.getElementById('tax').value;
+	taxes_to_validate     = taxes_to_validate.replace(',','.');
+	document.getElementById('tax').value = taxes_to_validate;
+	console.log('checking taxes '+document.getElementById('tax').value);
+	if (document.getElementById('tax').value >= 0 && document.getElementById('tax').value <= 1) {
+		console.log('tax rate is acceptable');
+		state['tax'] = document.getElementById('tax').value;
+	}
+}
+
+function check_total_up(checking_value) {
+	console.log('total send is '+total_send.innerText);
+	console.log('checking object is '+checking_value+' and checking value is '+document.getElementById(checking_value).value);
+	if (document.getElementById(checking_value).value > total_send.innerText*1) {
+		console.log('true');
+		document.getElementById(checking_value).value = 0;
+	}
+	let sum_expenses   = document.getElementById('send_to_parasit').value;
+	sum_expenses       = sum_expenses*1 + document.getElementById('send_to_medic').value*1;
+	sum_expenses       = sum_expenses*1 + document.getElementById('send_to_road').value*1;
+	sum_expenses       = sum_expenses*1 + document.getElementById('send_to_educ').value*1;
+	console.log('sum expenses is '+sum_expenses);
+	if (sum_expenses > total_send.innerText) {
+		console.log('true total');
+		document.getElementById(checking_value).value = 0;
+	}
+
+}
+
+function calc_vvp() {
+	let total_state = state["happy"] + state["medic"] + state["road"] + state["educ"];
+	return (total_state * state["ohlos"]);
+}
+
+function calc_ohl_up() {
+	console.log('tax is '+state["tax"]);
+	let total_state = state["happy"] + state["medic"] + state["road"] + state["educ"] - (state["tax"] * 4);
+	return Math.round(total_state * 4);
+}
+
+function next_state() {
+	console.log('next');
+	let cur_total   = state["total"];
+
+	cur_total      -= parseInt(send_to_medic.value);
+	cur_total      -= parseInt(send_to_road.value);
+	cur_total      -= parseInt(send_to_educ.value);
+	
+	cur_parasit    += parseInt(send_to_parasit.value);
+	cur_total      -= parseInt(send_to_parasit.value);
+
+	state["ohlos"] += cur_ohl_up;
+	state["total"]  = cur_total + cur_total_up;
+	//Math.round(num * 100) / 100
+	state["happy"]  = state["happy"] + Math.round((state["medic"] + state["road"] + state["educ"])*100/3)/100 - state["tax"];
+	state["happy"]  = Math.round((state["happy"])*100)/100;
+	day += 1;
+
+	show();
+}
+
+function show() {
+	cur_vvp      = Math.round(calc_vvp());
+	cur_ohl_up   = calc_ohl_up();//changing ohlos (citizens) amount
+	cur_total_up = Math.round((cur_vvp * state["tax"]));
+
+	total.innerText      = state["total"];
+	ohlos.innerText      = state["ohlos"];
+	happy.innerText      = state["happy"];
+	medic.innerText      = state["medic"];
+	road.innerText       = state["road"];
+	educ.innerText       = state["educ"];
+	vvp.innerText        = cur_vvp;
+	tax.innerText        = state["tax"];
+	total_up.innerText   = cur_total_up;
+	ohl_up.innerText     = cur_ohl_up;
+
+	parasit.innerText    = cur_parasit;
+	total_send.innerText = state["total"];
+
+	days.innerText       = day;
+}
+
+show();
+
+
+</script>
+</body>
+</html>
